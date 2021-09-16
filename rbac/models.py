@@ -1,17 +1,17 @@
 from django.db import models
-from django.contrib import auth
+from django.contrib.auth import models as auth_models, validators, base_user
 from django.utils import timezone
 
 from .managers import CustomUserManager
 
 class Role(models.Model):
     name = models.CharField(max_length=255)
-    permissions = models.ManyToManyField(auth.models.Permission)
+    permissions = models.ManyToManyField(auth_models.Permission)
 
-class User(auth.base_user.AbstractBaseUser):
+class User(base_user.AbstractBaseUser):
     email = models.EmailField(error_messages={'unique': 'A user with that email already exists.'}, blank=True, max_length=254, unique=True, verbose_name='email address')
     password = models.CharField(max_length=128, verbose_name='password')
-    username = models.CharField(help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, validators=[auth.validators.UnicodeUsernameValidator()], verbose_name='username')
+    username = models.CharField(help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, validators=[validators.UnicodeUsernameValidator()], verbose_name='username')
     first_name = models.CharField(blank=True, max_length=150, verbose_name='first name')
     last_name = models.CharField(blank=True, max_length=150, verbose_name='last name')
     is_active = models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')

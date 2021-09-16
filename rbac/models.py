@@ -1,8 +1,38 @@
 from django.db import models
+from django.contrib import auth
 from django.contrib.auth import models as auth_models, validators, base_user
 from django.utils import timezone
 
 from .managers import CustomUserManager
+
+from django.core.exceptions import PermissionDenied
+def _user_has_perm(user, perm, obj):
+    """
+    A backend can raise `PermissionDenied` to short-circuit permission checking.
+    """
+    for backend in auth.get_backends():
+        if not hasattr(backend, 'has_perm'):
+            continue
+        try:
+            if backend.has_perm(user, perm, obj):
+                return True
+        except PermissionDenied:
+            return False
+    return False
+
+def _user_has_module_perms(user, app_label):
+    """
+    A backend can raise `PermissionDenied` to short-circuit permission checking.
+    """
+    for backend in auth.get_backends():
+        if not hasattr(backend, 'has_module_perms'):
+            continue
+        try:
+            if backend.has_module_perms(user, app_label):
+                return True
+        except PermissionDenied:
+            return False
+    return False
 
 class Role(models.Model):
     name = models.CharField(max_length=255)
@@ -29,11 +59,34 @@ class User(base_user.AbstractBaseUser):
     objects = CustomUserManager()
 
     def has_perm(self, perm, obj=None):
-        "Does the user have a specific permission?"
-        # Simplest possible answer: Yes, always
-        return True
+        """
+        Return True if the user has the specified permission. Query all
+        available auth backends, but return immediately if any backend returns
+        True. Thus, a user who has permission from a single auth backend is
+        assumed to have permission in general. If an object is provided, check
+        permissions for that object.
+        """
+        # Active superusers have all permissions.
+        if self.is_active and self.is_superuser:
+            return True
+
+        # Otherwise we need to check the backends.
+        return _user_has_perm(self, perm, obj)
+
+    def has_perms(self, perm_list, obj=None):
+        """
+        Return True if the user has each of the specified permissions. If
+        object is passed, check if the user has all required perms for it.
+        """
+        return all(self.has_perm(perm, obj) for perm in perm_list)
 
     def has_module_perms(self, app_label):
-        "Does the user have permissions to view the app `app_label`?"
-        # Simplest possible answer: Yes, always
-        return True
+        """
+        Return True if the user has any permissions in the given app label.
+         Use similar logic as has_perm(), above.
+        """
+        # Active superusers have all permissions.
+        if self.is_active and self.is_superuser:
+            return True
+
+        return _user_has_module_perms(self, app_label)

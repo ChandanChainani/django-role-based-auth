@@ -21,7 +21,7 @@ class User(base_user.AbstractBaseUser):
     last_login = models.DateTimeField(blank=True, null=True, verbose_name='last login')
 
     groups = models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.Group', verbose_name='groups')
-    roles = models.ManyToManyField(Role)
+    roles = models.ManyToManyField(Role, blank=True)
     permissions = models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.Permission', verbose_name='permissions')
 
     USERNAME_FIELD = 'email'

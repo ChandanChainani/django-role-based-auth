@@ -58,6 +58,10 @@ class User(base_user.AbstractBaseUser):
 
     objects = CustomUserManager()
 
+    @property
+    def user_permissions(self):
+        return self.permissions
+
     def has_perm(self, perm, obj=None):
         """
         Return True if the user has the specified permission. Query all

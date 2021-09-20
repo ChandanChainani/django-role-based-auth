@@ -93,5 +93,7 @@ class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     list_display = ('email', 'username', 'first_name', 'last_name', 'is_staff')
 
+class RoleAdmin(admin.ModelAdmin):
+    filter_horizontal = ('permissions',)
 
-admin.site.register(Role)
+admin.site.register(Role, RoleAdmin)
